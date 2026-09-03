@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# BUT DE CE SCRIPT : lancer Vagrant avec les bons réglages pour les ordinateurs
+# de l'école. Utilisez `./bin/vagrant` à la place de la commande `vagrant`.
+
+# En langage simple : trouve où ce script est rangé pour pouvoir utiliser le
+# second wrapper `VBoxManage`, même si le projet est lancé depuis ailleurs.
+# Retrouve le dossier bin/ même si la commande est lancée depuis un autre chemin.
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+# En langage simple : avant de créer la VM, demande un disque de 40 Gio au lieu
+# du petit disque de 10 Gio fourni par défaut dans l'image Debian.
+# Vagrant 2.3 ne sait pas redimensionner un disque relié au contrôleur VirtIO.
+# Avant une création, ajuste donc la capacité déclarée par la box elle-même.
+if [[ ${1:-} == "up" ]]; then
+  # Vagrant remplace le caractère / du nom de box par VAGRANTSLASH sur disque.
+  box_ovf="$HOME/.vagrant.d/boxes/cloud-image-VAGRANTSLASH-debian-13-vbox-amd64/0/virtualbox/box.ovf"
+  if [[ -f "$box_ovf" ]]; then
+    # 42949672960 octets = 40 Gio. Cette valeur sera utilisée lors de l'import.
+    sed -i 's/ovf:capacity="[0-9]*"/ovf:capacity="42949672960"/' "$box_ovf"
+  fi
+fi
+
+# En langage simple : utilise notre adaptation locale, choisit VirtualBox, puis
+# transmet exactement la commande demandée au vrai programme Vagrant.
+# Place notre VBoxManage local avant /usr/bin dans PATH, force VirtualBox comme
+# provider, puis remplace ce processus par le vrai Vagrant grâce à exec.
+PATH="$script_dir:$PATH" VAGRANT_DEFAULT_PROVIDER=virtualbox \
+  exec /usr/bin/vagrant "$@"

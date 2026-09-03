@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# BUT DE CE SCRIPT : rendre l'ancien Vagrant de l'école compatible avec la
+# version plus récente de VirtualBox, sans modifier l'ordinateur et sans sudo.
+
+# En langage simple : quand Vagrant demande « quelle version de VirtualBox
+# utilises-tu ? », on répond 7.0 au lieu de 7.2 pour qu'il accepte de continuer.
+# Les véritables commandes restent envoyées à VirtualBox 7.2.
+# Vagrant 2.3.4 refuse VirtualBox 7.2. Pour son unique contrôle de version,
+# ce wrapper transforme par exemple 7.2.16 en 7.0.16, version qu'il connaît.
+if [[ "$1" == "--version" ]]; then
+  /usr/bin/VBoxManage --version | sed 's/^7\.2\./7.0./'
+else
+  # Toutes les vraies opérations sont transmises sans modification au binaire
+  # VirtualBox installé par l'école.
+  exec /usr/bin/VBoxManage "$@"
+fi

@@ -1,0 +1,11 @@
+# État local et clés SSH générés par Vagrant
+.vagrant/
+
+# Images de machines virtuelles et boxes locales
+*.box
+*.vdi
+*.vmdk
+
+# Fichiers temporaires des éditeurs et systèmes
+.DS_Store
+*~
