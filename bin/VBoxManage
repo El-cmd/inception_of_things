@@ -8,10 +8,27 @@
 # Les véritables commandes restent envoyées à VirtualBox 7.2.
 # Vagrant 2.3.4 refuse VirtualBox 7.2. Pour son unique contrôle de version,
 # ce wrapper transforme par exemple 7.2.16 en 7.0.16, version qu'il connaît.
-if [[ "$1" == "--version" ]]; then
-  /usr/bin/VBoxManage --version | sed 's/^7\.2\./7.0./'
+if [[ -n ${REAL_VBOXMANAGE:-} ]]; then
+  real_vboxmanage="$REAL_VBOXMANAGE"
+elif [[ -x /usr/bin/VBoxManage ]]; then
+  real_vboxmanage=/usr/bin/VBoxManage
+elif [[ -x /usr/local/bin/VBoxManage ]]; then
+  real_vboxmanage=/usr/local/bin/VBoxManage
+elif [[ -x /Applications/VirtualBox.app/Contents/MacOS/VBoxManage ]]; then
+  real_vboxmanage=/Applications/VirtualBox.app/Contents/MacOS/VBoxManage
+else
+  real_vboxmanage=""
+fi
+
+if [[ -z "$real_vboxmanage" || ! -x "$real_vboxmanage" ]]; then
+  printf 'Erreur : VBoxManage est introuvable (%s).\n' "$real_vboxmanage" >&2
+  exit 127
+fi
+
+if [[ ${1:-} == "--version" ]]; then
+  "$real_vboxmanage" --version | sed -E 's/^7\.[1-9]\./7.0./'
 else
   # Toutes les vraies opérations sont transmises sans modification au binaire
   # VirtualBox installé par l'école.
-  exec /usr/bin/VBoxManage "$@"
+  exec "$real_vboxmanage" "$@"
 fi

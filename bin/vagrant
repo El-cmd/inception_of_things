@@ -7,6 +7,73 @@
 # second wrapper `VBoxManage`, même si le projet est lancé depuis ailleurs.
 # Retrouve le dossier bin/ même si la commande est lancée depuis un autre chemin.
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+project_dir="$(cd -- "$script_dir/.." && pwd)"
+if [[ -n ${REAL_VAGRANT:-} ]]; then
+  real_vagrant="$REAL_VAGRANT"
+elif [[ -x /usr/bin/vagrant ]]; then
+  real_vagrant=/usr/bin/vagrant
+elif [[ -x /usr/local/bin/vagrant ]]; then
+  real_vagrant=/usr/local/bin/vagrant
+elif [[ -x /opt/vagrant/bin/vagrant ]]; then
+  real_vagrant=/opt/vagrant/bin/vagrant
+else
+  real_vagrant=""
+fi
+
+if [[ -n ${REAL_VBOXMANAGE:-} ]]; then
+  real_vboxmanage="$REAL_VBOXMANAGE"
+elif [[ -x /usr/bin/VBoxManage ]]; then
+  real_vboxmanage=/usr/bin/VBoxManage
+elif [[ -x /usr/local/bin/VBoxManage ]]; then
+  real_vboxmanage=/usr/local/bin/VBoxManage
+elif [[ -x /Applications/VirtualBox.app/Contents/MacOS/VBoxManage ]]; then
+  real_vboxmanage=/Applications/VirtualBox.app/Contents/MacOS/VBoxManage
+else
+  real_vboxmanage=""
+fi
+
+if [[ -z "$real_vagrant" || -z "$real_vboxmanage" || ! -x "$real_vagrant" || ! -x "$real_vboxmanage" ]]; then
+  printf 'Erreur : Vagrant et VirtualBox doivent être installés sur ce PC.\n' >&2
+  exit 127
+fi
+
+# En langage simple : à l'école, chaque personne range ses grosses VM dans son
+# propre dossier goinfre. Sur un PC personnel, VirtualBox garde son emplacement
+# normal. La variable VAGRANT_VM_STORAGE permet aussi de choisir un autre disque.
+if [[ -n ${VAGRANT_VM_STORAGE:-} ]]; then
+  vm_storage="$VAGRANT_VM_STORAGE"
+elif [[ -d /goinfre && -w /goinfre ]]; then
+  vm_storage="/goinfre/${USER:-$(id -un)}/iot-virtualbox"
+else
+  vm_storage="$($real_vboxmanage list systemproperties | sed -n 's/^Default machine folder:[[:space:]]*//p')"
+fi
+
+if [[ ${1:-} == "up" ]]; then
+  mkdir -p "$vm_storage"
+  "$real_vboxmanage" setproperty machinefolder "$vm_storage"
+
+  # `.vagrant` décrit uniquement la VM locale. Si le projet a été déplacé,
+  # copié depuis le compte d'un ami, ou si son disque a disparu, cet ancien
+  # identifiant n'est plus valable et doit être oublié avant la recréation.
+  state_dir="$project_dir/.vagrant/machines/default/virtualbox"
+  state_id_file="$state_dir/id"
+  state_cwd_file="$state_dir/vagrant_cwd"
+  stale_state=false
+
+  if [[ -f "$state_cwd_file" && $(<"$state_cwd_file") != "$project_dir" ]]; then
+    stale_state=true
+  fi
+  if [[ -f "$state_id_file" ]]; then
+    state_id="$(<"$state_id_file")"
+    if ! "$real_vboxmanage" showvminfo "$state_id" --machinereadable >/dev/null 2>&1; then
+      "$real_vboxmanage" unregistervm "$state_id" >/dev/null 2>&1 || true
+      stale_state=true
+    fi
+  fi
+  if [[ "$stale_state" == true ]]; then
+    rm -rf -- "$state_dir"
+  fi
+fi
 
 # En langage simple : avant de créer la VM, demande un disque de 40 Gio au lieu
 # du petit disque de 10 Gio fourni par défaut dans l'image Debian.
@@ -21,9 +88,41 @@ if [[ ${1:-} == "up" ]]; then
   fi
 fi
 
-# En langage simple : utilise notre adaptation locale, choisit VirtualBox, puis
-# transmet exactement la commande demandée au vrai programme Vagrant.
-# Place notre VBoxManage local avant /usr/bin dans PATH, force VirtualBox comme
-# provider, puis remplace ce processus par le vrai Vagrant grâce à exec.
+# En langage simple : utilise notre adaptation locale et choisit VirtualBox.
+# Pour les commandes ordinaires, il ne reste plus qu'à transmettre la demande.
+if [[ ${1:-} != "up" ]]; then
+  PATH="$script_dir:$PATH" VAGRANT_DEFAULT_PROVIDER=virtualbox \
+    REAL_VBOXMANAGE="$real_vboxmanage" exec "$real_vagrant" "$@"
+fi
+
+# Lors d'une première création, VirtualBox importe parfois le VMDK avec sa taille
+# d'origine de 10 Gio malgré la capacité indiquée dans l'OVF. On laisse l'import
+# se terminer, puis on vérifie la vraie taille du disque créé.
 PATH="$script_dir:$PATH" VAGRANT_DEFAULT_PROVIDER=virtualbox \
-  exec /usr/bin/vagrant "$@"
+  REAL_VBOXMANAGE="$real_vboxmanage" "$real_vagrant" "$@"
+first_status=$?
+
+state_id_file="$project_dir/.vagrant/machines/default/virtualbox/id"
+if [[ -f "$state_id_file" ]]; then
+  state_id="$(<"$state_id_file")"
+  disk_path="$($real_vboxmanage showvminfo "$state_id" --machinereadable 2>/dev/null \
+    | sed -n 's/^"VirtIO Controller-0-0"="\(.*\)"$/\1/p')"
+
+  if [[ -n "$disk_path" ]]; then
+    disk_capacity="$($real_vboxmanage showmediuminfo disk "$disk_path" 2>/dev/null \
+      | sed -n 's/^Capacity:[[:space:]]*\([0-9]*\) MBytes.*/\1/p')"
+    if [[ -n "$disk_capacity" && "$disk_capacity" -lt 40960 ]]; then
+      printf '\n[vagrant] Agrandissement automatique du disque à 40 Gio...\n'
+      PATH="$script_dir:$PATH" VAGRANT_DEFAULT_PROVIDER=virtualbox \
+        REAL_VBOXMANAGE="$real_vboxmanage" "$real_vagrant" halt
+      "$real_vboxmanage" modifymedium disk "$disk_path" --resize 40960
+
+      # Le redémarrage permet à Debian d'étendre sa partition. Le diagnostic
+      # marqué « always » confirme ensuite que l'espace est bien disponible.
+      PATH="$script_dir:$PATH" VAGRANT_DEFAULT_PROVIDER=virtualbox \
+        REAL_VBOXMANAGE="$real_vboxmanage" exec "$real_vagrant" "$@"
+    fi
+  fi
+fi
+
+exit "$first_status"

@@ -11,8 +11,9 @@ nécessaire.
 - Système : Debian 13 AMD64
 - Mémoire : 12 Go
 - Processeurs : 8
-- Disque : 40 Go. Le wrapper ajuste la capacité de la box avant sa création et
-  `setup.sh` agrandit automatiquement la partition Debian.
+- Disque : 40 Go. Après une première importation, le wrapper contrôle la taille
+  réelle du disque, l'agrandit si nécessaire, puis redémarre automatiquement la
+  VM pour que Debian étende sa partition.
 - Réseau : NAT, avec SSH redirigé vers `127.0.0.1:2222`
 - Virtualisation imbriquée : activée
 - IO-APIC : activé pour permettre à Debian d'utiliser les 8 processeurs
@@ -70,12 +71,31 @@ Vagrant 2.3.4 choisissait également une image ARM64 incompatible avec cet
 ordinateur x86_64. La box VirtualBox AMD64 a donc été installée explicitement
 sous le nom local `cloud-image/debian-13-vbox-amd64`.
 
-Enfin, `/home/vloth` ne disposait pas d'assez d'espace pour les disques de la
-VM. Le dossier VirtualBox par défaut a été déplacé vers :
+Sur les postes de l'école, le wrapper place automatiquement les gros fichiers
+de la VM dans un dossier propre à la session connectée :
 
 ```text
-/var/tmp/iot-virtualbox
+/goinfre/<login>/iot-virtualbox
 ```
+
+Cela donne par exemple `/goinfre/vloth/iot-virtualbox`,
+`/goinfre/msall/iot-virtualbox` ou `/goinfre/nleoni/iot-virtualbox`. Aucun login
+n'est écrit en dur dans les scripts. Sur un ordinateur personnel où `/goinfre`
+n'existe pas, le dossier VirtualBox configuré sur cet ordinateur est conservé.
+Le wrapper recherche aussi les emplacements d'installation habituels de
+Vagrant et VirtualBox sous Linux et macOS.
+
+Pour imposer soi-même un emplacement, utilisez par exemple :
+
+```bash
+VAGRANT_VM_STORAGE=/chemin/avec/assez/de/place ./bin/vagrant up
+```
+
+Le dossier `.vagrant` est un état local : il contient notamment l'identifiant
+de la VM du compte courant. Il est ignoré par Git et ne doit pas être envoyé à
+un ami. Si le dépôt est déplacé, ou si cet identifiant pointe vers une VM dont
+les fichiers ont disparu, le wrapper nettoie automatiquement cet état lors du
+prochain `up`.
 
 ## Commandes principales
 
