@@ -40,10 +40,26 @@ fi
 # En langage simple : à l'école, chaque personne range ses grosses VM dans son
 # propre dossier goinfre. Sur un PC personnel, VirtualBox garde son emplacement
 # normal. La variable VAGRANT_VM_STORAGE permet aussi de choisir un autre disque.
+goinfre_user_dir="/goinfre/${USER:-$(id -un)}"
+
+# Le home des sessions de l'école est trop petit pour contenir les boxes.
+# Utilise le dossier goinfre propre à l'utilisateur dès qu'il est accessible.
+if [[ -z ${VAGRANT_HOME:-} && -d /goinfre ]]; then
+  mkdir -p "$goinfre_user_dir/vagrant-home" 2>/dev/null || true
+  if [[ -w "$goinfre_user_dir/vagrant-home" ]]; then
+    export VAGRANT_HOME="$goinfre_user_dir/vagrant-home"
+  fi
+fi
+
 if [[ -n ${VAGRANT_VM_STORAGE:-} ]]; then
   vm_storage="$VAGRANT_VM_STORAGE"
-elif [[ -d /goinfre && -w /goinfre ]]; then
-  vm_storage="/goinfre/${USER:-$(id -un)}/iot-virtualbox"
+elif [[ -d /goinfre ]]; then
+  mkdir -p "$goinfre_user_dir/iot-virtualbox" 2>/dev/null || true
+  if [[ -w "$goinfre_user_dir/iot-virtualbox" ]]; then
+    vm_storage="$goinfre_user_dir/iot-virtualbox"
+  else
+    vm_storage="$($real_vboxmanage list systemproperties | sed -n 's/^Default machine folder:[[:space:]]*//p')"
+  fi
 else
   vm_storage="$($real_vboxmanage list systemproperties | sed -n 's/^Default machine folder:[[:space:]]*//p')"
 fi
@@ -81,7 +97,7 @@ fi
 # Avant une création, ajuste donc la capacité déclarée par la box elle-même.
 if [[ ${1:-} == "up" ]]; then
   # Vagrant remplace le caractère / du nom de box par VAGRANTSLASH sur disque.
-  box_ovf="$HOME/.vagrant.d/boxes/cloud-image-VAGRANTSLASH-debian-13-vbox-amd64/0/virtualbox/box.ovf"
+  box_ovf="${VAGRANT_HOME:-$HOME/.vagrant.d}/boxes/cloud-image-VAGRANTSLASH-debian-13-vbox-amd64/0/virtualbox/box.ovf"
   if [[ -f "$box_ovf" ]]; then
     # 42949672960 octets = 40 Gio. Cette valeur sera utilisée lors de l'import.
     sed -i 's/ovf:capacity="[0-9]*"/ovf:capacity="42949672960"/' "$box_ovf"
