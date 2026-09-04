@@ -1,0 +1,25 @@
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "debian/trixie64"
+
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+
+    config.vm.provider :libvirt do |v|
+        v.driver = "kvm"
+        v.memory = 1024
+        v.cpus = 1
+    end
+
+    config.vm.define "nleoniS" do |node|
+        node.vm.hostname = "nleoniS"
+        node.vm.network "private_network", ip: "192.168.56.110"
+        node.vm.provision "shell", path: "scripts/server.sh"
+    end
+
+    config.vm.define "vlothSW" do |node|
+        node.vm.hostname = "vlothSW"
+        node.vm.network "private_network", ip: "192.168.56.111"
+        node.vm.provision "shell", path: "scripts/worker.sh"
+    end
+
+end
