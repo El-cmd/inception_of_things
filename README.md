@@ -69,7 +69,11 @@ globale `vagrant`. Il n'est pas nécessaire d'ajouter
 
 Vagrant 2.3.4 choisissait également une image ARM64 incompatible avec cet
 ordinateur x86_64. La box VirtualBox AMD64 a donc été installée explicitement
-sous le nom local `cloud-image/debian-13-vbox-amd64`.
+sous le nom local `cloud-image/debian-13-vbox-amd64`. Lors du premier
+`./bin/vagrant up` d'une nouvelle session, le wrapper trouve la version AMD64
+actuelle dans le catalogue officiel et crée automatiquement cet alias local.
+L'erreur 404 sur ce nom ne doit donc plus apparaître et aucune connexion à
+Vagrant Cloud n'est nécessaire.
 
 Sur les postes de l'école, le wrapper place automatiquement les gros fichiers
 de la VM dans un dossier propre à la session connectée :

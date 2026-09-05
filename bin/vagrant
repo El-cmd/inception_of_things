@@ -68,6 +68,50 @@ if [[ ${1:-} == "up" ]]; then
   mkdir -p "$vm_storage"
   "$real_vboxmanage" setproperty machinefolder "$vm_storage"
 
+  # Le nom utilisé dans le Vagrantfile est volontairement un alias local : il
+  # garantit une image AMD64, alors que l'ancien Vagrant de l'école choisit
+  # parfois l'image ARM64 du catalogue. Sur une nouvelle session, cet alias
+  # n'existe pas encore ; on récupère donc automatiquement l'URL AMD64 actuelle
+  # dans le catalogue officiel, puis on ajoute la box sous le bon nom.
+  box_name="cloud-image/debian-13-vbox-amd64"
+  if ! PATH="$script_dir:$PATH" REAL_VBOXMANAGE="$real_vboxmanage" \
+      "$real_vagrant" box list 2>/dev/null \
+      | sed 's/[[:space:]]*(.*$//' | grep -Fxq "$box_name"; then
+    if ! command -v curl >/dev/null 2>&1; then
+      printf 'Erreur : curl est nécessaire pour télécharger la box Debian AMD64.\n' >&2
+      exit 127
+    fi
+
+    printf '[vagrant] Téléchargement de la box Debian 13 VirtualBox AMD64...\n'
+    box_url="$(curl -fsSL \
+      'https://vagrantcloud.com/api/v2/vagrant/cloud-image/debian-13' \
+      | tr ',' '\n' \
+      | sed -n 's/.*"url":"\([^"]*\/providers\/virtualbox\/amd64\/vagrant\.box\)".*/\1/p' \
+      | head -n 1)"
+
+    if [[ -z "$box_url" ]]; then
+      printf 'Erreur : impossible de trouver la box VirtualBox AMD64 dans le catalogue.\n' >&2
+      exit 1
+    fi
+
+    # L'ancien Vagrant interprète mal les redirections du nouveau catalogue.
+    # Télécharger d'abord le fichier évite qu'il prenne l'archive pour du JSON.
+    box_tmp_dir="${VAGRANT_HOME:-${TMPDIR:-/tmp}}"
+    mkdir -p "$box_tmp_dir"
+    box_tmp="$(mktemp "$box_tmp_dir/debian-13-amd64-XXXXXX.box")"
+    if ! curl -fL "$box_url" -o "$box_tmp"; then
+      rm -f -- "$box_tmp"
+      printf 'Erreur : échec du téléchargement de la box Debian.\n' >&2
+      exit 1
+    fi
+    if ! PATH="$script_dir:$PATH" REAL_VBOXMANAGE="$real_vboxmanage" \
+        "$real_vagrant" box add --name "$box_name" "$box_tmp"; then
+      rm -f -- "$box_tmp"
+      exit 1
+    fi
+    rm -f -- "$box_tmp"
+  fi
+
   # `.vagrant` décrit uniquement la VM locale. Si le projet a été déplacé,
   # copié depuis le compte d'un ami, ou si son disque a disparu, cet ancien
   # identifiant n'est plus valable et doit être oublié avant la recréation.
