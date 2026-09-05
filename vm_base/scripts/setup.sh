@@ -186,4 +186,4 @@ k3d version
 log "Installation terminée"
 printf '%s\n' \
   'Déconnectez-vous puis reconnectez-vous pour appliquer les groupes docker/libvirt/kvm.' \
-  'Lancez ensuite : cd /vagrant && ./scripts/check-config.sh'
+  'Lancez ensuite : cd /vagrant/vm_base && ./scripts/check-config.sh'

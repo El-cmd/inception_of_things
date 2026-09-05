@@ -4,6 +4,10 @@ Vagrant.configure("2") do |config|
   config.vm.box = "cloud-image/debian-13-vbox-amd64"
   config.vm.hostname = "iot"
 
+  # Le Vagrantfile est dans vm_base/, mais la VM doit voir tout le dépôt.
+  # Le dossier parent (avec P1, P2 et P3) est donc partagé dans /vagrant.
+  config.vm.synced_folder "..", "/vagrant"
+
   config.vm.provider "virtualbox" do |vb|
     vb.name = "iot-host"
 
