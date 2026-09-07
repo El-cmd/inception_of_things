@@ -20,7 +20,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: wil-playground-ingress
+  name: vloth2602/iot-app-ingress
   namespace: dev
 spec:
   rules:
@@ -30,7 +30,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: wil-playground-service
+            name: vloth2602/iot-app-service
             port:
               number: 8888
 EOF

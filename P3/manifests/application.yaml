@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: wil-playground-app
+  name: vloth2602/iot-app-app
   namespace: argocd
 spec:
   project: default

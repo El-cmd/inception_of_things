@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>IoT Deploy Monitor</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-family: Arial, sans-serif;
+
+            background:
+                radial-gradient(circle at top, #1e293b, #020617 65%);
+
+            color: white;
+        }
+
+        .card {
+            width: 420px;
+
+            padding: 40px;
+
+            border-radius: 24px;
+
+            background: rgba(15, 23, 42, 0.8);
+
+            border: 1px solid rgba(255,255,255,0.08);
+
+            box-shadow:
+                0 25px 60px rgba(0,0,0,0.45);
+
+            backdrop-filter: blur(12px);
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 14px;
+            letter-spacing: 2px;
+
+            color: #94a3b8;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            font-size: 14px;
+            color: #86efac;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow: 0 0 12px #22c55e;
+        }
+
+        h1 {
+            margin-top: 55px;
+            margin-bottom: 10px;
+
+            font-size: 42px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .version {
+            margin-top: 40px;
+
+            padding: 22px;
+
+            border-radius: 16px;
+
+            background: #020617;
+
+            border: 1px solid #1e293b;
+        }
+
+        .version-label {
+            font-size: 12px;
+
+            text-transform: uppercase;
+
+            color: #64748b;
+
+            letter-spacing: 2px;
+        }
+
+        .version-value {
+            margin-top: 8px;
+
+            font-size: 48px;
+
+            font-weight: bold;
+
+            color: #38bdf8;
+        }
+
+        .footer {
+            margin-top: 40px;
+
+            display: flex;
+            justify-content: space-between;
+
+            font-size: 12px;
+
+            color: #64748b;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.45;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="top">
+
+        <div class="logo">
+            INCEPTION OF THINGS
+        </div>
+
+        <div class="status">
+            <div class="dot pulse"></div>
+            ONLINE
+        </div>
+
+    </div>
+
+    <h1>
+        Deploy Monitor
+    </h1>
+
+    <div class="subtitle">
+        Kubernetes application deployed automatically
+        using K3d and Argo CD.
+    </div>
+
+    <div class="version">
+
+        <div class="version-label">
+            Running version
+        </div>
+
+        <div class="version-value">
+            {{ version }}
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <span>K3d Cluster</span>
+        <span>Argo CD Managed</span>
+    </div>
+
+</div>
+
+</body>
+</html>
