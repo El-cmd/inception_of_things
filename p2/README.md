@@ -1,4 +1,4 @@
-# P2 — K3s et trois applications
+# p2 — K3s et trois applications
 
 Cette partie crée une machine virtuelle contenant un serveur K3s et trois
 applications web. Un Ingress choisit l'application à afficher grâce au nom
@@ -23,17 +23,17 @@ Ordinateur physique
             └── Ingress
 ```
 
-VirtualBox sert uniquement à lancer la première VM `iot-host`. La VM de P2 est
+VirtualBox sert uniquement à lancer la première VM `iot-host`. La VM de p2 est
 ensuite créée dans `iot-host` avec Vagrant, libvirt et QEMU.
 
 ## Contenu du dossier
 
 ```text
-P2/
+p2/
 ├── Vagrantfile
 ├── scripts/
 │   └── setup.sh
-└── manifests/
+└── confs/
     ├── app1.yaml
     ├── app2.yaml
     ├── app3.yaml
@@ -44,7 +44,7 @@ P2/
 - `scripts/setup.sh` installe et configure K3s.
 - Les fichiers YAML décrivent les applications, les Services et l'Ingress.
 
-## Lancer P2
+## Lancer p2
 
 Depuis l'ordinateur physique, démarrer la VM principale puis s'y connecter :
 
@@ -54,10 +54,10 @@ cd vm_base
 ./bin/vagrant ssh
 ```
 
-Dans la VM `iot-host`, aller dans P2 et créer la VM `nleoniS` :
+Dans la VM `iot-host`, aller dans p2 et créer la VM `nleoniS` :
 
 ```bash
-cd /vagrant/P2
+cd /vagrant/p2
 vagrant up --provider=libvirt
 ```
 
@@ -68,7 +68,7 @@ Commandes Vagrant utiles :
 
 ```bash
 vagrant status             # afficher l'état de la VM
-vagrant ssh nleoniS        # entrer dans la VM de P2
+vagrant ssh nleoniS        # entrer dans la VM de p2
 vagrant halt               # arrêter proprement la VM
 vagrant reload             # redémarrer la VM
 vagrant provision          # relancer uniquement le script setup.sh
@@ -95,7 +95,7 @@ config.vm.synced_folder ".", "/vagrant", disabled: true
 ```
 
 Vagrant partage normalement tout le dossier du projet dans `/vagrant`. Ce
-partage est désactivé pour la VM imbriquée. Seul le dossier `manifests` sera
+partage est désactivé pour la VM imbriquée. Seul le dossier `confs` sera
 envoyé avec `rsync` plus bas.
 
 ### Fournisseur et ressources
@@ -131,11 +131,11 @@ par le sujet.
 ### Copie des manifests et provisioning
 
 ```ruby
-node.vm.synced_folder "./manifests", "/home/vagrant/manifests", type: "rsync"
+node.vm.synced_folder "./confs", "/home/vagrant/confs", type: "rsync"
 node.vm.provision "shell", path: "scripts/setup.sh"
 ```
 
-- `rsync` copie les manifests dans `/home/vagrant/manifests` dans la VM.
+- `rsync` copie les manifests dans `/home/vagrant/confs` dans la VM.
 - Le provisioner `shell` exécute ensuite `scripts/setup.sh` en tant que `root`.
 - Ce partage n'est pas une synchronisation permanente. Après une modification,
   utiliser `vagrant rsync` ou relancer le provisioning.
@@ -214,7 +214,7 @@ curl -sfL https://get.k3s.io | sh -
 - `| sh -` transmet le script téléchargé à `sh` pour l'exécuter.
 
 K3s installe un petit cluster Kubernetes. Il fournit aussi `kubectl` et Traefik,
-le contrôleur Ingress utilisé par P2.
+le contrôleur Ingress utilisé par p2.
 
 ### Attendre que K3s soit prêt
 
@@ -247,7 +247,7 @@ Grâce à cela, l'utilisateur `vagrant` peut utiliser directement `kubectl`.
 
 ```bash
 mkdir -p /var/lib/rancher/k3s/server/manifests
-cp /home/vagrant/manifests/*.yaml /var/lib/rancher/k3s/server/manifests/
+cp /home/vagrant/confs/*.yaml /var/lib/rancher/k3s/server/manifests/
 ```
 
 K3s surveille le dossier `/var/lib/rancher/k3s/server/manifests`. Chaque fichier
@@ -375,10 +375,10 @@ règle sans `host` dirigent toutes les autres requêtes vers `app3-service`.
 
 ## Vérifier le cluster
 
-Entrer d'abord dans la VM P2 :
+Entrer d'abord dans la VM p2 :
 
 ```bash
-cd /vagrant/P2
+cd /vagrant/p2
 vagrant ssh nleoniS
 ```
 
@@ -441,17 +441,17 @@ curl --resolve app2.com:80:192.168.56.110 http://app2.com/
 Pour tester rapidement une modification depuis la VM `nleoniS` :
 
 ```bash
-kubectl apply -f /home/vagrant/manifests/
+kubectl apply -f /home/vagrant/confs/
 ```
 
 Si les fichiers ont été modifiés sur l'ordinateur physique, il faut d'abord les
 recopier depuis `iot-host` :
 
 ```bash
-cd /vagrant/P2
+cd /vagrant/p2
 vagrant rsync
 vagrant ssh nleoniS
-kubectl apply -f /home/vagrant/manifests/
+kubectl apply -f /home/vagrant/confs/
 ```
 
 Après l'application d'un changement, contrôler le résultat :

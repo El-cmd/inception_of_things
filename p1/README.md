@@ -1,4 +1,4 @@
-# P1 depuis la machine `vm_base`
+# p1 depuis la machine `vm_base`
 
 ## Architecture utilisée
 
@@ -7,19 +7,19 @@ Sur les postes de l'école, le projet utilise plusieurs niveaux :
 ```text
 Ordinateur de l'école
 └── VirtualBox : VM iot-host (vm_base)
-    └── libvirt : VM nleoniS et VM vlothSW (P1)
+    └── libvirt : VM nleoniS et VM vlothSW (p1)
 ```
 
 Le dépôt de l'ordinateur physique est partagé dans `iot-host` sous `/vagrant`.
-P1 est donc disponible dans la première VM à cet emplacement :
+p1 est donc disponible dans la première VM à cet emplacement :
 
 ```bash
-cd /vagrant/P1
+cd /vagrant/p1
 ```
 
 Il n'est pas nécessaire de refaire un `git clone` dans `iot-host`.
 
-## Machines de P1
+## Machines de p1
 
 - `nleoniS` est le serveur K3s, à l'adresse `192.168.56.110` ;
 - `vlothSW` est le worker K3s, à l'adresse `192.168.56.111`.
@@ -75,7 +75,7 @@ son UUID existait encore, mais Vagrant ne pouvait pas obtenir son adresse IP.
 
 ## Utiliser QEMU sur les postes de l'école
 
-Dans `P1/Vagrantfile`, remplacez le pilote KVM par cette configuration :
+Dans `p1/Vagrantfile`, remplacez le pilote KVM par cette configuration :
 
 ```ruby
 config.vm.provider :libvirt do |v|
@@ -106,21 +106,21 @@ Elles sont à utiliser uniquement si cette première création est bloquée et n
 contient aucune donnée à conserver :
 
 ```bash
-cd /vagrant/P1
-sudo virsh -c qemu:///system destroy P1_nleoniS 2>/dev/null || true
-sudo virsh -c qemu:///system undefine P1_nleoniS --remove-all-storage
+cd /vagrant/p1
+sudo virsh -c qemu:///system destroy p1_nleoniS 2>/dev/null || true
+sudo virsh -c qemu:///system undefine p1_nleoniS --remove-all-storage
 rm -rf .vagrant/machines/nleoniS
 ```
 
 Si le worker a également été créé et est bloqué, appliquez le même nettoyage :
 
 ```bash
-sudo virsh -c qemu:///system destroy P1_vlothSW 2>/dev/null || true
-sudo virsh -c qemu:///system undefine P1_vlothSW --remove-all-storage
+sudo virsh -c qemu:///system destroy p1_vlothSW 2>/dev/null || true
+sudo virsh -c qemu:///system undefine p1_vlothSW --remove-all-storage
 rm -rf .vagrant/machines/vlothSW
 ```
 
-## Lancer P1
+## Lancer p1
 
 Depuis l'ordinateur physique, entrez d'abord dans la VM hôte :
 
@@ -133,7 +133,7 @@ cd vm_base
 Puis, dans `iot-host` :
 
 ```bash
-cd /vagrant/P1
+cd /vagrant/p1
 vagrant up --provider=libvirt --no-parallel
 ```
 
@@ -199,4 +199,4 @@ S'il reste affiché plusieurs minutes :
 1. vérifiez les réseaux avec `sudo virsh -c qemu:///system net-list --all` ;
 2. vérifiez les baux avec `sudo virsh -c qemu:///system net-dhcp-leases vagrant-libvirt` ;
 3. vérifiez les domaines avec `sudo virsh -c qemu:///system list --all` ;
-4. sur une VM VirtualBox, vérifiez que P1 utilise QEMU et non KVM.
+4. sur une VM VirtualBox, vérifiez que p1 utilise QEMU et non KVM.

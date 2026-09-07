@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
     config.vm.define "nleoniS" do |node|
         node.vm.hostname = "nleoniS"
         node.vm.network "private_network", ip: "192.168.56.110"
-        node.vm.synced_folder "./manifests", "/home/vagrant/manifests", type: "rsync"
+        node.vm.synced_folder "./confs", "/home/vagrant/confs", type: "rsync"
         node.vm.provision "shell", path: "scripts/setup.sh"
     end
     

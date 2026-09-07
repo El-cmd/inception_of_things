@@ -22,4 +22,4 @@ chown -R vagrant:vagrant /home/vagrant/.kube
 echo "export KUBECONFIG=/home/vagrant/.kube/config" >> /home/vagrant/.bashrc
 
 mkdir -p /var/lib/rancher/k3s/server/manifests
-cp /home/vagrant/manifests/*.yaml /var/lib/rancher/k3s/server/manifests/
+cp /home/vagrant/confs/*.yaml /var/lib/rancher/k3s/server/manifests/

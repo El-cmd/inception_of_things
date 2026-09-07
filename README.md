@@ -2,10 +2,11 @@
 
 Ce dépôt contient les différentes parties du projet :
 
-- `vm_base/` : machine virtuelle hôte utilisée pour travailler sans droits
-  administrateur sur les postes de l'école ;
-- `P1/` : première partie avec les machines K3s server et worker ; son
-  [mode d'emploi](P1/README.md) explique le lancement depuis `vm_base` ;
+- `p1/` : première partie avec les machines K3s server et worker ;
+- `p2/` : deuxième partie avec K3s et trois applications ;
+- `p3/` : troisième partie avec K3d, Argo CD et GitOps ;
+- `vm_base/` : machine virtuelle hôte facultative pour les postes sans droits
+  administrateur ;
 - `en.subject.pdf` : sujet du projet.
 
 Pour créer ou démarrer la machine hôte :

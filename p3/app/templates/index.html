@@ -11,6 +11,16 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --accent: #38bdf8;
+            --halo: #1e293b;
+        }
+
+        body.version-v2 {
+            --accent: #c084fc;
+            --halo: #581c87;
+        }
+
         body {
             margin: 0;
             min-height: 100vh;
@@ -22,7 +32,7 @@
             font-family: Arial, sans-serif;
 
             background:
-                radial-gradient(circle at top, #1e293b, #020617 65%);
+                radial-gradient(circle at top, var(--halo), #020617 65%);
 
             color: white;
         }
@@ -118,7 +128,7 @@
 
             font-weight: bold;
 
-            color: #38bdf8;
+            color: var(--accent);
         }
 
         .footer {
@@ -152,7 +162,7 @@
     </style>
 </head>
 
-<body>
+<body class="version-{{ version }}">
 
 <div class="card">
 
@@ -170,12 +180,11 @@
     </div>
 
     <h1>
-        Deploy Monitor
+        {{ title }}
     </h1>
 
     <div class="subtitle">
-        Kubernetes application deployed automatically
-        using K3d and Argo CD.
+        {{ message }}
     </div>
 
     <div class="version">
