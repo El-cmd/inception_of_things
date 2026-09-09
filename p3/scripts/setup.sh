@@ -2,6 +2,8 @@
 set -e
 
 CLUSTER_NAME="iot-cluster"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+P3_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 
 # Docker
 if ! command -v docker >/dev/null 2>&1; then
@@ -52,7 +54,7 @@ echo "En attente du démarrage d'Argo CD..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
 
 echo "=== 5. Déploiement de l'Application ==="
-    kubectl apply -f ../confs/application.yaml
+kubectl apply -f "$P3_DIR/confs/application.yaml"
 
 echo "=== 6. Informations de connexion ==="
 echo "Application URL : http://localhost:8888"

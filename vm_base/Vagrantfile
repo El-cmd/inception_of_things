@@ -8,10 +8,11 @@ Vagrant.configure("2") do |config|
   # Le dossier parent (avec p1, p2 et p3) est donc partagé dans /vagrant.
   config.vm.synced_folder "..", "/vagrant/"
 
-  # Rend l'application p3 et l'interface Argo CD accessibles depuis le
+  # Rend l'application p3, Argo CD et le GitLab du bonus accessibles depuis le
   # navigateur de l'ordinateur physique, sans ouvrir ces ports sur le réseau.
   config.vm.network "forwarded_port", guest: 8888, host: 8888, host_ip: "127.0.0.1"
   config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 8929, host: 8929, host_ip: "127.0.0.1"
 
   config.vm.provider "virtualbox" do |vb|
     vb.name = "iot-host"

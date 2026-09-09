@@ -76,13 +76,45 @@ apt-get install -y --no-install-recommends \
   make \
   nfs-common \
   openssh-client \
+  openssl \
   qemu-system-x86 \
   qemu-utils \
   rsync \
   unzip \
   vagrant \
   vagrant-libvirt \
-  vim
+  vim \
+  zsh
+
+log "Installation de Oh My Zsh"
+# En langage simple : installe Oh My Zsh dans le compte utilisé en SSH. Le clone
+# est fait avec l'utilisateur `vagrant` pour que les fichiers lui appartiennent.
+oh_my_zsh_dir="/home/vagrant/.oh-my-zsh"
+vagrant_zshrc="/home/vagrant/.zshrc"
+
+if [[ ! -d "$oh_my_zsh_dir" ]]; then
+  runuser -u vagrant -- git clone --depth=1 \
+    https://github.com/ohmyzsh/ohmyzsh.git "$oh_my_zsh_dir"
+fi
+
+# Une nouvelle VM reçoit la configuration standard de Oh My Zsh. Si un fichier
+# .zshrc existe déjà, il est conservé et Oh My Zsh y est seulement activé.
+if [[ ! -f "$vagrant_zshrc" ]]; then
+  install -o vagrant -g vagrant -m 0644 \
+    "$oh_my_zsh_dir/templates/zshrc.zsh-template" "$vagrant_zshrc"
+elif ! grep -Fq 'oh-my-zsh.sh' "$vagrant_zshrc"; then
+  printf '%s\n' \
+    '' \
+    '# Oh My Zsh installé automatiquement par vm_base/scripts/setup.sh' \
+    'export ZSH="$HOME/.oh-my-zsh"' \
+    'ZSH_THEME="robbyrussell"' \
+    'plugins=(git)' \
+    'source "$ZSH/oh-my-zsh.sh"' >> "$vagrant_zshrc"
+  chown vagrant:vagrant "$vagrant_zshrc"
+fi
+
+# Les prochaines connexions `vagrant ssh` ouvriront directement Zsh.
+usermod --shell "$(command -v zsh)" vagrant
 
 log "Agrandissement de la partition racine"
 # En langage simple : VirtualBox a agrandi le disque virtuel à 40 Gio, mais
@@ -177,6 +209,7 @@ log "Versions installées"
 # Ces commandes servent aussi de dernier test : grâce à `set -e`, une commande
 # absente fait échouer le provisioning au lieu de masquer une installation ratée.
 git --version
+zsh --version
 vagrant --version
 virsh --version
 docker --version

@@ -5,6 +5,7 @@ Ce dépôt contient les différentes parties du projet :
 - `p1/` : première partie avec les machines K3s server et worker ;
 - `p2/` : deuxième partie avec K3s et trois applications ;
 - `p3/` : troisième partie avec K3d, Argo CD et GitOps ;
+- `bonus/` : GitLab local utilisé par Argo CD à la place de GitHub ;
 - `vm_base/` : machine virtuelle hôte facultative pour les postes sans droits
   administrateur ;
 - `en.subject.pdf` : sujet du projet.

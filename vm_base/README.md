@@ -21,7 +21,8 @@ nécessaire.
 - Disque : 40 Go. Après une première importation, le wrapper contrôle la taille
   réelle du disque, l'agrandit si nécessaire, puis redémarre automatiquement la
   VM pour que Debian étende sa partition.
-- Réseau : NAT, avec SSH redirigé vers `127.0.0.1:2222`
+- Réseau : NAT, avec les ports de l'application, d'Argo CD et de GitLab
+  redirigés uniquement vers l'ordinateur local
 - Virtualisation imbriquée : activée
 - IO-APIC : activé pour permettre à Debian d'utiliser les 8 processeurs
 
@@ -33,10 +34,28 @@ parties du projet :
 - QEMU/KVM, libvirt, Vagrant et le plugin `vagrant-libvirt` pour les VM
   imbriquées de `p1` et `p2` ;
 - Docker, kubectl et K3d pour `p3` ;
+- Zsh et Oh My Zsh, configurés comme terminal par défaut du compte `vagrant` ;
 - les groupes et services nécessaires au compte `vagrant`.
 
 Il n'installe pas K3s directement : chaque partie devra fournir ses propres
 scripts d'installation et de configuration de K3s, conformément au sujet.
+
+Oh My Zsh est installé dans `/home/vagrant/.oh-my-zsh`. Le fichier `.zshrc`
+standard est créé s'il n'existe pas déjà ; une configuration existante est
+conservée. Après un nouveau provisioning, quittez puis rouvrez la connexion SSH
+pour entrer automatiquement dans Zsh :
+
+```bash
+./bin/vagrant provision
+./bin/vagrant ssh
+```
+
+Dans la VM, les commandes suivantes confirment l'installation :
+
+```zsh
+echo $SHELL
+zsh --version
+```
 
 Le script `scripts/check-config.sh` contrôle la configuration de la VM hôte sans
 la modifier. Il est exécuté automatiquement après `setup.sh`, puis à chaque

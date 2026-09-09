@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-config
+  namespace: gitlab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-logs
+  namespace: gitlab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-data
+  namespace: gitlab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab
+  namespace: gitlab
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gitlab
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: gitlab
+          image: gitlab/gitlab-ce:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: GITLAB_OMNIBUS_CONFIG
+              value: |
+                external_url 'http://localhost:8929'
+                nginx['listen_port'] = 80
+                nginx['listen_https'] = false
+                letsencrypt['enable'] = false
+                gitlab_rails['initial_root_password'] = File.read('/run/secrets/gitlab_root_password').strip
+                gitlab_rails['gitlab_shell_ssh_port'] = 22
+                gitlab_rails['usage_ping_enabled'] = false
+                puma['worker_processes'] = 0
+                sidekiq['concurrency'] = 5
+                prometheus_monitoring['enable'] = false
+                gitlab_kas['enable'] = false
+          resources:
+            requests:
+              cpu: "2"
+              memory: 3Gi
+            limits:
+              cpu: "4"
+              memory: 6Gi
+          startupProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "curl -fsS -H 'Host: localhost:8929' http://127.0.0.1/-/readiness"
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 80
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "curl -fsS -H 'Host: localhost:8929' http://127.0.0.1/-/readiness"
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
+          volumeMounts:
+            - name: config
+              mountPath: /etc/gitlab
+            - name: logs
+              mountPath: /var/log/gitlab
+            - name: data
+              mountPath: /var/opt/gitlab
+            - name: shared-memory
+              mountPath: /dev/shm
+            - name: root-password
+              mountPath: /run/secrets/gitlab_root_password
+              subPath: root_password
+              readOnly: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: gitlab-config
+        - name: logs
+          persistentVolumeClaim:
+            claimName: gitlab-logs
+        - name: data
+          persistentVolumeClaim:
+            claimName: gitlab-data
+        - name: shared-memory
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi
+        - name: root-password
+          secret:
+            secretName: gitlab-root-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab
+  namespace: gitlab
+spec:
+  type: ClusterIP
+  selector:
+    app: gitlab
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -148,11 +148,27 @@ section "Outils du projet IoT"
 # Une absence est un avertissement plutôt qu'une erreur de virtualisation.
 command_version git git --version
 command_version curl curl --version
+command_version zsh zsh --version
 command_version vagrant vagrant --version
 command_version virsh virsh --version
 command_version docker docker --version
 command_version kubectl kubectl version --client
 command_version k3d k3d version
+
+if [[ -f /home/vagrant/.oh-my-zsh/oh-my-zsh.sh ]]; then
+  ok "Oh My Zsh est installé pour l'utilisateur vagrant"
+else
+  warn "Oh My Zsh n'est pas installé pour l'utilisateur vagrant"
+fi
+
+if getent passwd vagrant >/dev/null 2>&1; then
+  vagrant_shell=$(getent passwd vagrant | cut -d: -f7)
+  if [[ -n ${vagrant_shell:-} && ${vagrant_shell##*/} == "zsh" ]]; then
+    ok "Zsh est le shell par défaut de l'utilisateur vagrant"
+  else
+    warn "Zsh n'est pas le shell par défaut de l'utilisateur vagrant"
+  fi
+fi
 
 section "Résumé"
 
